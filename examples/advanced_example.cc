@@ -1,6 +1,7 @@
 #include <future>
 #include <iostream>
 #include <string>
+#include <fstream>
 
 #include <unistd.h>
 #include <math.h>
@@ -8,10 +9,51 @@
 
 #include "Communication.h"
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 using namespace std;
-using namespace Debug;
 
+bool CheckJson(json j)
+{
+    bool ok_check = true;
+	if(!j.contains("url")){
+		throw std::runtime_error("JSON does not contain key [url] of type [std::string] in object [config]");
+        ok_check = false;
+    }
+	if(!j.contains("port")){
+		throw std::runtime_error("JSON does not contain key [port] of type [std::string] in object [config]");
+        ok_check = false;
+    }
 
+    return ok_check;
+}
+
+bool Deserialize(communication_config& obj, json j)
+{
+	bool ok_check = CheckJson(j);
+    if (ok_check) {
+        obj.url = j["url"];
+        obj.port = j["port"];
+    }
+    return ok_check;
+}
+
+bool LoadJson(communication_config& obj, std::string path)
+{
+	std::ifstream f(path);
+    if(!f.is_open()){
+		throw std::runtime_error("Error opening file!");
+        return false;
+    };
+	json j;
+	f >> j;
+	f.close();
+	bool ok_deser = Deserialize(obj, j);
+	return ok_deser;
+}
+
+// Callback
 void on_message(string topic, string message)
 {
     std::cout << topic << "***" << message << std::endl;
@@ -23,9 +65,14 @@ int main() {
     CO::Communication receiver;
     CO::Communication listener;
 
+    // // Simple way
+    // communication_config config;
+    // config.url = "tcp://127.0.0.1";
+    // config.port = 5656;
+
+    // Using .json config
     communication_config config;
-    config.url = "tcp://127.0.0.1";
-    config.port = 5656;
+    bool ok_load = LoadJson(config, "../config/config.json");
 
     sender.Init(CO::PUBLISHER, config);
     receiver.Init(CO::SUBSCRIBER, config);

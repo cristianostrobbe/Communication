@@ -1,12 +1,14 @@
-# Communication
-Allows to establish tcp/udp connection and send data with low latency (using cppzmq).  
+# __Communication__
+Allows to establish __tcp/udp__ connection and send data with low latency (using cppzmq) in a __publisher/subsciber__ technology. 
 
-Contains python code generators to generate cpp files to serialize/deserialize structures from/to json,  
-serialize/deserialize protocolbuffer messages.
+# Dependecies
+This library depends on:
+- [ZMQ](https://github.com/zeromq/libzmq)
+- [cppzmq](https://github.com/zeromq/cppzmq)
+- [nlohman json](https://github.com/nlohmann/json)
 
-
-## Installation
-### ZMQ
+## Install dependencies
+### 1. __ZMQ__
 ~~~bash
 git clone https://github.com/zeromq/libzmq.git
 mkdir build
@@ -16,6 +18,7 @@ make
 sudo make install
 ~~~
 
+### 2. __CppZMQ__
 ~~~bash
 git clone https://github.com/zeromq/cppzmq.git
 mkdir build
@@ -24,15 +27,31 @@ cmake ..
 make
 sudo make install
 ~~~
+### 3. __nlohmann json__
+On __MacOS__:
+~~~bash
+brew install nlohmann-json
+~~~
+On __Ubuntu__
+~~~bash
+sudo apt install nlohmann-json3-dev
+~~~
 
+# __Build__
+~~~bash
+mkdir build
+cd build && cmake ..
+make
+~~~
+Then inside __bin__ folder you can find the compiled examples.
 
-## Usage
+# __Usage__
 
 ### Initialization
 ~~~c++
 // Loading configurations from file (url and port)
 communication_config config;
-LoadJson(config, "config.json");
+bool ok_load = LoadJson(config, "config.json");
 
 // This can only send data
 CO::Communication sender;
@@ -46,7 +65,7 @@ receiver.Init(CO::SUBSCRIBER, config);
 ~~~json
 {
   "url": "tcp://127.0.0.1",
-  "port": "8080"
+  "port": 8080
 }
 ~~~
 
@@ -79,17 +98,17 @@ receiver.GetListenerMessages("topic1", messages);
 listener.AddTopicToListener("config");
 ~~~
 
-Also can be setted a callback function, called when the listener receives a message
+Callback functions can be also added, these called when the listener receives a message
 ~~~c++
 void on_message(string topic, string message)
 {
   cout << "[" << topic << "] Message: "<< message << endl;
   vector<string> messages;
-  receiver.GetListenerMessages("topic1", messages);
+  receiver.GetListenerMessages(topic, messages);
 }
 
 // Enabling listener on topic1
 receiver.EnableTopicListener("topic1");
-
+// Set callback
 receiver.SetListenerOnMessage("topic1", on_message);
 ~~~
